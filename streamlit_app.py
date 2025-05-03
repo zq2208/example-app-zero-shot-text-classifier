@@ -118,14 +118,6 @@ with MainTab:
     # Then, we create a intro text for the app, which we wrap in a st.markdown() widget.
 
     st.write("")
-    st.markdown(
-        """
-
-    Classify keyphrases on the fly with this mighty app. No training needed!
-
-    """
-    )
-
     st.write("")
 
     # Now, we create a form via `st.form` to collect the user inputs.
@@ -135,22 +127,12 @@ with MainTab:
 
     with st.form(key="my_form"):
 
-        ############ ST TAGS ############
+        st.markdown("Enter a single word and get its classification using the selected model.")
 
-        # We initialize the st_tags component with default "labels"
-
-        # Here, we want to classify the text into one of the following user intents:
-        # Transactional
-        # Informational
-        # Navigational
-
-        labels_from_st_tags = st_tags(
-            value=["Transactional", "Informational", "Navigational"],
-            maxtags=3,
-            suggestions=["Transactional", "Informational", "Navigational"],
-            label="",
-        )
-
+    user_input = st.text_input(
+        "Enter a word",
+        help="Enter a word in English, Malay, or Chinese to classify"
+    )
         # The block of code below is to display some text samples to classify.
         # This can of course be replaced with your own text samples.
 
