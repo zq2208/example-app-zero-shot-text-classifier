@@ -138,58 +138,8 @@ with MainTab:
 
         # MAX_KEY_PHRASES is a variable that controls the number of phrases that can be pasted:
         # The default in this app is 50 phrases. This can be changed to any number you like.
-
+        
         new_line = "\n"
-
-        pre_defined_keyphrases = [
-            "I want to buy something",
-            "We have a question about a product",
-            "I want a refund through the Google Play store",
-            "Can I have a discount, please",
-            "Can I have the link to the product page?",
-        ]
-
-        # Python list comprehension to create a string from the list of keyphrases.
-        keyphrases_string = f"{new_line.join(map(str, pre_defined_keyphrases))}"
-
-        # The block of code below displays a text area
-        # So users can paste their phrases to classify
-
-        text = st.text_area(
-            # Instructions
-            "Enter keyphrases to classify",
-            # 'sample' variable that contains our keyphrases.
-            keyphrases_string,
-            # The height
-            height=200,
-            # The tooltip displayed when the user hovers over the text area.
-            help="At least two keyphrases for the classifier to work, one per line, "
-            + str(MAX_KEY_PHRASES)
-            + " keyphrases max in 'unlocked mode'. You can tweak 'MAX_KEY_PHRASES' in the code to change this",
-            key="1",
-        )
-
-        # The block of code below:
-
-        # 1. Converts the data st.text_area into a Python list.
-        # 2. It also removes duplicates and empty lines.
-        # 3. Raises an error if the user has entered more lines than in MAX_KEY_PHRASES.
-
-        text = text.split("\n")  # Converts the pasted text to a Python list
-        linesList = []  # Creates an empty list
-        for x in text:
-            linesList.append(x)  # Adds each line to the list
-        linesList = list(dict.fromkeys(linesList))  # Removes dupes
-        linesList = list(filter(None, linesList))  # Removes empty lines
-
-        if len(linesList) > MAX_KEY_PHRASES:
-            st.info(
-                f"❄️ Note that only the first "
-                + str(MAX_KEY_PHRASES)
-                + " keyphrases will be reviewed to preserve performance. Fork the repo and tweak 'MAX_KEY_PHRASES' in the code to increase that limit."
-            )
-
-            linesList = linesList[:MAX_KEY_PHRASES]
 
         submit_button = st.form_submit_button(label="Submit")
 
