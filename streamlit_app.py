@@ -129,10 +129,10 @@ with MainTab:
 
         st.markdown("Enter a single word and get its classification using the selected model.")
 
-    user_input = st.text_input(
-        "Enter a word",
-        help="Enter a word in English, Malay, or Chinese to classify"
-    )
+        user_input = st.text_input(
+            "Enter a word",
+            help="Enter a word in English, Malay, or Chinese to classify"
+        )
         # The block of code below is to display some text samples to classify.
         # This can of course be replaced with your own text samples.
 
