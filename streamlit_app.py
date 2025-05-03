@@ -1,253 +1,113 @@
-############ 1. IMPORTING LIBRARIES ############
-
-# Import streamlit, requests for API calls, and pandas and numpy for data manipulation
-
 import streamlit as st
-import requests
 import pandas as pd
 import numpy as np
-from streamlit_tags import st_tags  # to add labels on the fly!
+import torch
+from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
 
-
-############ 2. SETTING UP THE PAGE LAYOUT AND TITLE ############
-
-# `st.set_page_config` is used to display the default layout width, the title of the app, and the emoticon in the browser tab.
-
+# Set page configuration
 st.set_page_config(
-    layout="centered", page_title="Zero-Shot Text Classifier", page_icon="❄️"
+    layout="centered", page_title="OOV Sentiment Analysis"
 )
 
-############ CREATE THE LOGO AND HEADING ############
+# Initialize session state
+if "valid_inputs_received" not in st.session_state:
+    st.session_state["valid_inputs_received"] = False
 
+############ CREATE THE LOGO AND HEADING ############
 st.caption("")
 st.title("OOV Sentiment Analysis")
 
-
-# We need to set up session state via st.session_state so that app interactions don't reset the app.
-
-if not "valid_inputs_received" in st.session_state:
-    st.session_state["valid_inputs_received"] = False
-
-
 ############ SIDEBAR CONTENT ############
-
 st.sidebar.write("")
-
-# For elements to be displayed in the sidebar, we need to add the sidebar element in the widget.
-
-# We create a text input field for users to enter their API key.
-
-MODEL_OPTIONS = {
-    "Distilbert-base-multilingual-cased": "path/to/your/mbert_model",
-    "Another Model (Optional)": "path/to/another_model"
-}
-
-selected_model_name = st.sidebar.selectbox(
-    "Choose a classification model",
-    options=list(MODEL_OPTIONS.keys()),
-    help="Select a model you want to use for sentiment or text classification"
-)
-
-selected_model_path = MODEL_OPTIONS[selected_model_name]
-
+MODEL_PATH = "./final_distilbert_model"
+st.sidebar.markdown(f"Using model: DistilBERT from {MODEL_PATH}")
 st.sidebar.markdown("---")
 
+# Load model and tokenizer
+@st.cache_resource
+def load_model_and_tokenizer():
+    try:
+        tokenizer = DistilBertTokenizer.from_pretrained(MODEL_PATH)
+        model = DistilBertForSequenceClassification.from_pretrained(MODEL_PATH)
+        model.eval()
+        return tokenizer, model
+    except Exception as e:
+        st.error(f"Failed to load model or tokenizer: {str(e)}")
+        return None, None
+
+tokenizer, model = load_model_and_tokenizer()
+
+if tokenizer is None or model is None:
+    st.stop()
 
 ############ TABBED NAVIGATION ############
-
-# First, we're going to create a tabbed navigation for the app via st.tabs()
-# tabInfo displays info about the app.
-# tabMain displays the main app.
-
-MainTab, InfoTab = st.tabs(["Main", "Info"])
+InfoTab, MainTab = st.tabs(["Info", "Main"])
 
 with InfoTab:
-
     st.subheader("What is Streamlit?")
     st.markdown(
         "[Streamlit](https://streamlit.io) is a Python library that allows the creation of interactive, data-driven web applications in Python."
     )
-
     st.subheader("Resources")
     st.markdown(
         """
-    - [Streamlit Documentation](https://docs.streamlit.io/)
-    - [Cheat sheet](https://docs.streamlit.io/library/cheatsheet)
-    - [Book](https://www.amazon.com/dp/180056550X) (Getting Started with Streamlit for Data Science)
-    """
+        - [Streamlit Documentation](https://docs.streamlit.io/)
+        - [Cheat sheet](https://docs.streamlit.io/library/cheatsheet)
+        - [Book](https://www.amazon.com/dp/180056550X) (Getting Started with Streamlit for Data Science)
+        """
     )
-
     st.subheader("Deploy")
     st.markdown(
         "You can quickly deploy Streamlit apps using [Streamlit Community Cloud](https://streamlit.io/cloud) in just a few clicks."
     )
 
-
 with MainTab:
-
-    # Then, we create a intro text for the app, which we wrap in a st.markdown() widget.
-
     st.write("")
     st.write("")
-
-    # Now, we create a form via `st.form` to collect the user inputs.
-
-    # All widget values will be sent to Streamlit in batch.
-    # It makes the app faster!
+    st.write("")
 
     with st.form(key="my_form"):
-
-        st.markdown("Enter a single word and get its classification using the selected model.")
-
-        user_input = st.text_input(
-            "Enter a word",
-            help="Enter a word in English, Malay, or Chinese to classify"
+        # Text input for sentiment analysis
+        input_text = st.text_area(
+            "Enter text for sentiment analysis",
+            placeholder="Type your text here...",
+            height=150
         )
-        # The block of code below is to display some text samples to classify.
-        # This can of course be replaced with your own text samples.
-
-        # MAX_KEY_PHRASES is a variable that controls the number of phrases that can be pasted:
-        # The default in this app is 50 phrases. This can be changed to any number you like.
-        
-        new_line = "\n"
-
-        submit_button = st.form_submit_button(label="Submit")
+        submit_button = st.form_submit_button(label="Classify Sentiment")
 
     ############ CONDITIONAL STATEMENTS ############
-
-    # Now, let us add conditional statements to check if users have entered valid inputs.
-    # E.g. If the user has pressed the 'submit button without text, without labels, and with only one label etc.
-    # The app will display a warning message.
-
     if not submit_button and not st.session_state.valid_inputs_received:
         st.stop()
 
-    elif submit_button and not text:
-        st.warning("❄️ There is no keyphrases to classify")
-        st.session_state.valid_inputs_received = False
-        st.stop()
-
-    elif submit_button and not labels_from_st_tags:
-        st.warning("❄️ You have not added any labels, please add some! ")
-        st.session_state.valid_inputs_received = False
-        st.stop()
-
-    elif submit_button and len(labels_from_st_tags) == 1:
-        st.warning("❄️ Please make sure to add at least two labels for classification")
+    elif submit_button and not input_text.strip():
+        st.warning("Please enter text to classify.")
         st.session_state.valid_inputs_received = False
         st.stop()
 
     elif submit_button or st.session_state.valid_inputs_received:
-
         if submit_button:
-
-            # The block of code below if for our session state.
-            # This is used to store the user's inputs so that they can be used later in the app.
-
             st.session_state.valid_inputs_received = True
 
-        ############ MAKING THE API CALL ############
-
-        # First, we create a Python function to construct the API call.
-
-        def query(payload):
-            response = requests.post(API_URL, headers=headers, json=payload)
-            return response.json()
-
-        # The function will send an HTTP POST request to the API endpoint.
-        # This function has one argument: the payload
-        # The payload is the data we want to send to HugggingFace when we make an API request
-
-        # We create a list to store the outputs of the API call
-
-        list_for_api_output = []
-
-        # We create a 'for loop' that iterates through each keyphrase
-        # An API call will be made every time, for each keyphrase
-
-        # The payload is composed of:
-        #   1. the keyphrase
-        #   2. the labels
-        #   3. the 'wait_for_model' parameter set to "True", to avoid timeouts!
-
-        for row in linesList:
-            api_json_output = query(
-                {
-                    "inputs": row,
-                    "parameters": {"candidate_labels": labels_from_st_tags},
-                    "options": {"wait_for_model": True},
-                }
+        ############ Modeling Call ############
+        with st.spinner("Classifying..."):
+            # Tokenize input
+            inputs = tokenizer(
+                input_text,
+                return_tensors="pt",
+                truncation=True,
+                padding=True
             )
+            # Inference
+            with torch.no_grad():
+                outputs = model(**inputs)
+                logits = outputs.logits
+                probs = torch.softmax(logits, dim=1)
+                pred = torch.argmax(probs, dim=1).item()
 
-            # Let's have a look at the output of the API call
-            # st.write(api_json_output)
+            # Convert label {0, 1} to {-1, 1} as per your model's evaluation
+            label_map = {0: -1, 1: 1}
+            sentiment = label_map[pred]
 
-            # All the results are appended to the empty list we created earlier
-            list_for_api_output.append(api_json_output)
-
-            # then we'll convert the list to a dataframe
-            df = pd.DataFrame.from_dict(list_for_api_output)
-
-        st.success("✅ Done!")
-
-        st.caption("")
-        st.markdown("### Check the results!")
-        st.caption("")
-
-        # st.write(df)
-
-        ############ DATA WRANGLING ON THE RESULTS ############
-        # Various data wrangling to get the data in the right format!
-
-        # List comprehension to convert the score from decimals to percentages
-        f = [[f"{x:.2%}" for x in row] for row in df["scores"]]
-
-        # Join the classification scores to the dataframe
-        df["classification scores"] = f
-
-        # Rename the column 'sequence' to 'keyphrase'
-        df.rename(columns={"sequence": "keyphrase"}, inplace=True)
-
-        # The API returns a list of all labels sorted by score. We only want the top label.
-
-        # For that, we need to select the first element in the 'labels' and 'classification scores' lists
-        df["label"] = df["labels"].str[0]
-        df["accuracy"] = df["classification scores"].str[0]
-
-        # Drop the columns we don't need
-        df.drop(["scores", "labels", "classification scores"], inplace=True, axis=1)
-
-        # st.write(df)
-
-        # We need to change the index. Index starts at 0, so we make it start at 1
-        df.index = np.arange(1, len(df) + 1)
-
-        # Display the dataframe
-        st.write(df)
-
-        cs, c1 = st.columns([2, 2])
-
-
-
-
-        # The code below is for the download button
-        # Cache the conversion to prevent computation on every rerun
-
-        with cs:
-
-            @st.experimental_memo
-            def convert_df(df):
-                return df.to_csv().encode("utf-8")
-
-            csv = convert_df(df)
-
-            st.caption("")
-
-            st.download_button(
-                label="Download results",
-                data=csv,
-                file_name="classification_results.csv",
-                mime="text/csv",
-            )
-
-
+            # Display results
+            st.success(f"Predicted Sentiment: {sentiment} ({'Positive' if sentiment == 1 else 'Negative'})")
+            st.write(f"Confidence: {probs[0][pred].item():.2f}")
