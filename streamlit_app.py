@@ -19,27 +19,8 @@ st.set_page_config(
 
 ############ CREATE THE LOGO AND HEADING ############
 
-# We create a set of columns to display the logo and the heading next to each other.
-
-
-c1, c2 = st.columns([0.32, 2])
-
-# The snowflake logo will be displayed in the first column, on the left.
-
-with c1:
-
-    st.image(
-        "images/logo.png",
-        width=85,
-    )
-
-
-# The heading will be on the right.
-
-with c2:
-
-    st.caption("")
-    st.title("Zero-Shot Text Classifier")
+st.caption("")
+st.title("OOV Sentiment Analysis")
 
 
 # We need to set up session state via st.session_state so that app interactions don't reset the app.
@@ -56,31 +37,20 @@ st.sidebar.write("")
 
 # We create a text input field for users to enter their API key.
 
-API_KEY = st.sidebar.text_input(
-    "Enter your HuggingFace API key",
-    help="Once you created you HuggingFace account, you can get your free API token in your settings page: https://huggingface.co/settings/tokens",
-    type="password",
+MODEL_OPTIONS = {
+    "Distilbert-base-multilingual-cased": "path/to/your/mbert_model",
+    "Another Model (Optional)": "path/to/another_model"
+}
+
+selected_model_name = st.sidebar.selectbox(
+    "Choose a classification model",
+    options=list(MODEL_OPTIONS.keys()),
+    help="Select a model you want to use for sentiment or text classification"
 )
 
-# Adding the HuggingFace API inference URL.
-API_URL = "https://api-inference.huggingface.co/models/valhalla/distilbart-mnli-12-3"
-
-# Now, let's create a Python dictionary to store the API headers.
-headers = {"Authorization": f"Bearer {API_KEY}"}
-
+selected_model_path = MODEL_OPTIONS[selected_model_name]
 
 st.sidebar.markdown("---")
-
-
-# Let's add some info about the app to the sidebar.
-
-st.sidebar.write(
-    """
-
-App created by [Charly Wargnier](https://twitter.com/DataChaz) using [Streamlit](https://streamlit.io/)🎈 and [HuggingFace](https://huggingface.co/inference-api)'s [Distilbart-mnli-12-3](https://huggingface.co/valhalla/distilbart-mnli-12-3) model.
-
-"""
-)
 
 
 ############ TABBED NAVIGATION ############
