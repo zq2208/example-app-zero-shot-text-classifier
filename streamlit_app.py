@@ -139,8 +139,6 @@ with MainTab:
         # MAX_KEY_PHRASES is a variable that controls the number of phrases that can be pasted:
         # The default in this app is 50 phrases. This can be changed to any number you like.
 
-        MAX_KEY_PHRASES = 50
-
         new_line = "\n"
 
         pre_defined_keyphrases = [
